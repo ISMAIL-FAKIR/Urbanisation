@@ -11,7 +11,7 @@ import { AntDesign } from '@expo/vector-icons';
 // ... (import statements)
 
 const FicheVinScreen = ({ navigation, route }) => {
-  const { matchedWine, userId, isLoggedIn  } = route.params;
+  const { matchedWine, userId, /*isLoggedIn*/  } = route.params;
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [showComments, setShowComments] = useState(false);
@@ -21,7 +21,7 @@ const FicheVinScreen = ({ navigation, route }) => {
   const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
   const backendURL = 'http://192.168.4.36:3000/';
   const isFocused = useIsFocused();
-  //const [isLoggedIn, setIsLoggedIn] = useState(userId !== null);
+  const [isLoggedIn, setIsLoggedIn] = useState(userId !== null);
 
   useEffect(() => {
     loadComments();
