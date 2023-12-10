@@ -8,7 +8,7 @@ import { Animated } from 'react-native';
 
 const HomeScreen = ({ navigation }) => {
   const backendURL = 'http://192.168.4.36:3000/';
-
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
@@ -29,6 +29,7 @@ const HomeScreen = ({ navigation }) => {
       setSearchResults([]);
       setShowResults(false);
     }
+
   };
 
   useEffect(() => {

@@ -30,7 +30,7 @@ class OCRModel {
   }
 
   matchTextWithDatabase(text) {
-    const similarityThreshold = 0.02; 
+    const similarityThreshold = 0.5; 
     return new Promise(async (resolve, reject) => {
       try {
         const allWines = await WineModel.getAllWines();
@@ -38,7 +38,7 @@ class OCRModel {
         let bestMatchScore = 0;
 
         allWines.forEach((wine) => {
-          const fieldsToCompare = [wine.nom, wine.description, wine.chateau].join(' ').toLowerCase();
+          const fieldsToCompare = [wine.nom].join(' ').toLowerCase();
           
           const similarityScore = this.calculateLevenshteinDistance(text, fieldsToCompare);
           

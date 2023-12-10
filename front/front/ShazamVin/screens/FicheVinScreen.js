@@ -8,9 +8,10 @@ import { useIsFocused, useFocusEffect } from '@react-navigation/native';
 import { IconButton } from 'react-native-paper';
 import { AntDesign } from '@expo/vector-icons';
 
+// ... (import statements)
 
 const FicheVinScreen = ({ navigation, route }) => {
-  const { matchedWine, userId } = route.params;
+  const { matchedWine, userId, isLoggedIn  } = route.params;
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [showComments, setShowComments] = useState(false);
@@ -20,28 +21,21 @@ const FicheVinScreen = ({ navigation, route }) => {
   const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
   const backendURL = 'http://192.168.4.36:3000/';
   const isFocused = useIsFocused();
+  //const [isLoggedIn, setIsLoggedIn] = useState(userId !== null);
 
   useEffect(() => {
     loadComments();
     loadUserRating();
     loadAverageRating();
     getUserIdFromStorage();
-  }, []);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      loadComments();
-      loadUserRating();
-      loadAverageRating();
-      getUserIdFromStorage();
-    }, [isFocused])
-  );
+  }, [isFocused]);
 
   const getUserIdFromStorage = async () => {
     try {
       const storedUserId = await AsyncStorage.getItem('userId');
       if (storedUserId) {
         setUserId(storedUserId);
+        setIsLoggedIn(true);
       }
     } catch (error) {
       console.error('Erreur lors de la récupération de l\'ID utilisateur depuis AsyncStorage:', error);
@@ -78,6 +72,11 @@ const FicheVinScreen = ({ navigation, route }) => {
   };
 
   const handleAddComment = async () => {
+    if (!isLoggedIn) {
+      // Display a message or redirect to the login screen
+      return;
+    }
+
     try {
       await axios.post(`${backendURL}comments/create`, {
         description: newComment,
@@ -118,6 +117,11 @@ const FicheVinScreen = ({ navigation, route }) => {
   };
 
   const handleRating = async (rating) => {
+    if (!isLoggedIn) {
+      // Display a message or redirect to the login screen
+      return;
+    }
+
     setSelectedRating(rating);
     try {
       await axios.post(`${backendURL}notes/create`, {
@@ -153,110 +157,137 @@ const FicheVinScreen = ({ navigation, route }) => {
 
   return (
     <ImageBackground
-      source={require('../images/bg.png')} // Remplacez par le chemin de votre image
+      source={require('../images/bg.png')}
       style={styles.backgroundImage}
-      blurRadius={8} // Ajustez la valeur pour le flou souhaité
+      blurRadius={8}
       onLoadEnd={() => setBackgroundImageLoaded(true)}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
-        {backgroundImageLoaded && (
-          <View style={styles.container}>
-            <Text style={styles.label}>Name:</Text>
-            <Text style={styles.appName}>{matchedWine.nom}</Text>
+      <FlatList
+        data={['dummy']}
+        keyExtractor={() => 'dummy'}
+        renderItem={() => (
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={[styles.container, { flex: comments.length > 0 ? 1 : 0 }]}
+          >
+            {backgroundImageLoaded && (
+              <View style={styles.container}>
+                <Text style={styles.label}>Name:</Text>
+                <Text style={styles.appName}>{matchedWine.nom}</Text>
 
-            {matchedWine.photo_blob && (
-              <Image
-                source={{ uri: `data:image/jpeg;base64,${matchedWine.photo_blob}` }}
-                style={styles.logo}
-              />
-            )}
+                {matchedWine.photo_blob && (
+                  <Image
+                    source={require('../images/FREYNELLE.jpg')}
+                    style={styles.logo}
+                  />
+                )}
 
-            <Text style={styles.label}>Description:</Text>
-            <Text style={styles.description}>{matchedWine.description}</Text>
+                <Text style={styles.label}>Description:</Text>
+                <Text style={styles.description}>{matchedWine.description}</Text>
 
-            <Text style={styles.label}>Château:</Text>
-            <Text style={styles.chateau}>{matchedWine.chateau}</Text>
+                <Text style={styles.label}>Château:</Text>
+                <Text style={styles.chateau}>{matchedWine.chateau}</Text>
 
-            <Text style={styles.label}>Prix:</Text>
-            <Text style={styles.prix}>{matchedWine.prix}</Text>
+                <Text style={styles.label}>Prix:</Text>
+                <Text style={styles.prix}>{matchedWine.prix}</Text>
 
-            {userId && (
-              <TouchableOpacity
-                style={styles.commentButton}
-                onPress={() => setShowComments(!showComments)}
-              >
-                <AntDesign name="eye" size={15} color="white" />
-                <Text style={styles.commentButtonText}>
-                  {showComments ? 'Hide Comments' : 'Show Comments'}
-                </Text>
-              </TouchableOpacity>
-            )}
+                <TouchableOpacity
+                  style={styles.commentButton}
+                  onPress={() => setShowComments(!showComments)}
+                >
+                  <AntDesign name="eye" size={15} color="white" />
+                  <Text style={styles.commentButtonText}>
+                    {showComments ? 'Hide Comments' : 'Show Comments'}
+                  </Text>
+                </TouchableOpacity>
 
-            {showComments && userId && (
-              <>
-                <FlatList
-                  data={comments}
-                  keyExtractor={(item, index) => `${item.id.toString()}_${index}`}
-                  renderItem={({ item }) => (
-                    <View style={styles.commentContainer}>
-                      <Text>{item.description}</Text>
-                      <TouchableOpacity onPress={() => handleDeleteComment(item.id)}>
-                        <AntDesign name="delete" size={15} color="white" />
+                {showComments && (
+                  <FlatList
+                    data={comments}
+                    keyExtractor={(item, index) => `${item.id.toString()}_${index}`}
+                    renderItem={({ item }) => (
+                      <View style={styles.commentContainer}>
+                        <Text>{item.description}</Text>
+                        {/* Display delete button if user owns the comment */}
+                        {isLoggedIn && userId === item.userId && (
+                          <TouchableOpacity onPress={() => handleDeleteComment(item.id)}>
+                            <AntDesign name="delete" size={15} color="white" />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    )}
+                  />
+                )}
+
+                {isLoggedIn && (
+                  <>
+                    <View style={styles.commentInputContainer}>
+                      <TextInput
+                        style={styles.commentInput}
+                        placeholder="Add a comment..."
+                        value={newComment}
+                        onChangeText={setNewComment}
+                      />
+                      <TouchableOpacity
+                        style={styles.commentButton}
+                        onPress={handleAddComment}
+                      >
+                        <AntDesign name="plus" size={15} color="white" />
+                        <Text style={styles.commentButtonText}>Add</Text>
                       </TouchableOpacity>
                     </View>
-                  )}
-                />
-              </>
-            )}
 
-            {userId !== null ? (
-              <>
-                <View style={styles.commentInputContainer}>
-                  <TextInput
-                    style={styles.commentInput}
-                    placeholder="Add a comment..."
-                    value={newComment}
-                    onChangeText={setNewComment}
-                  />
-                  <TouchableOpacity
-                    style={styles.commentButton}
-                    onPress={handleAddComment}
-                  >
-                    <AntDesign name="plus" size={15} color="white" />
-                    <Text style={styles.commentButtonText}>Add</Text>
-                  </TouchableOpacity>
-                </View>
+                    <Text style={styles.label}>Rating:</Text>
+                    {averageRating !== null && (
+                      <Text style={styles.averageRatingText}>
+                        Average Rating: {averageRating.toFixed(1)}/5
+                      </Text>
+                    )}
+                    {true && renderRatingStars(userRating !== null ? userRating : 0)}
+                    {userRating !== null && (
+                      <Text style={styles.userRatingText}>
+                        Your Rating: {userRating}/5
+                      </Text>
+                    )}
+                  </>
+                )}
 
-                <Text style={styles.label}>Rating:</Text>
-                {averageRating !== null && (
-                  <Text style={styles.averageRatingText}>Average Rating: {averageRating.toFixed(1)}/5</Text>
+                {!isLoggedIn && (
+                  <>
+                    <Text style={styles.label}>Rating:</Text>
+                    {averageRating !== null ? (
+                      <Text style={styles.averageRatingText}>
+                        Average Rating: {averageRating.toFixed(1)}/5
+                      </Text>
+                    ) : (
+                      <Text style={styles.averageRatingText}>
+                        Average Rating: Not available
+                      </Text>
+                    )}
+                  </>
                 )}
-                {true && (
-                  renderRatingStars(userRating !== null ? userRating : 0)
+
+                {!isLoggedIn && (
+                  <View style={styles.loginMessageContainer}>
+                    <Text style={styles.loginMessage}>
+                      Login to comment and rate.
+                    </Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                      <Text style={styles.loginLink}>click here !</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
-                {userRating !== null && (
-                  <Text style={styles.userRatingText}>Your Rating: {userRating}/5</Text>
-                )}
-              </>
-            ) : (
-              <View style={styles.loginMessageContainer}>
-                <Text style={styles.loginMessage}>
-                  Login to comment and rate.
-                </Text>
-                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                  <Text style={styles.loginLink}>click here !</Text>
-                </TouchableOpacity>
               </View>
             )}
-          </View>
+          </KeyboardAvoidingView>
         )}
-      </KeyboardAvoidingView>
+        // Ensure that the FlatList takes up the entire screen
+        style={{ flex: 1 }}
+      />
     </ImageBackground>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -266,6 +297,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 20,
   },
+
   backgroundImage: {
     flex: 1,
     resizeMode: 'cover',

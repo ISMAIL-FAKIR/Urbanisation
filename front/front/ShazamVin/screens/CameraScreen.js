@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, ImageBackground } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ImageBackground, Text  } from 'react-native';
 import { Camera } from 'expo-camera';
 import axios from 'axios';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { FontAwesome } from '@expo/vector-icons';
 
 const CameraScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const { params } = route;
   const [hasPermission, setHasPermission] = useState(null);
   const [cameraRef, setCameraRef] = useState(null);
   const [imageUri, setImageUri] = useState(null);
   const backendURL = 'http://192.168.4.36:3000/';
+  const isLoggedIn = params?.isLoggedIn || false;
+  const userId = params?.userId || null;
+
 
   useEffect(() => {
     (async () => {
@@ -36,6 +41,10 @@ const CameraScreen = () => {
         type: 'image/jpeg', // ou le type de votre image
         name: 'photo.jpg',
       });
+
+      if (isLoggedIn) {
+        formData.append('userId', userId);
+      }
   
       const response = await axios.post(`${backendURL}ocr/process-image`, formData, {
         headers: {
