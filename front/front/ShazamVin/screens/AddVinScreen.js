@@ -17,14 +17,14 @@ const AddVinScreen = ({ navigation }) => {
   const handleChoosePhoto = async () => {
     let result = await ImagePicker.launchImageLibraryAsync();
 
-    if (!result.cancelled) {
-      setPhotoBlob(result.uri);
+    if (!result.canceled) {
+      setPhotoBlob(result.assets[0].uri);
     }
   };
 
   const handleCreateWine = async () => {
     try {
-      const response = await axios.post(`${backendURL}/wine/create`, {
+      const response = await axios.post(`${backendURL}wine/create`, {
         nom,
         description,
         embouteillage,
