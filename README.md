@@ -2,6 +2,11 @@
 
 Bienvenue dans l'application Urbanisation, une plateforme de gestion de vins! Ce guide vous aidera à déployer les parties front et back de l'application sur votre environnement local.
 
+## Développer par :
+
+- **Ismail Fakir**
+- **Ibrahim Jallouli**
+
 ## Structure du Projet
 
 Le projet est organisé en deux parties distinctes :
